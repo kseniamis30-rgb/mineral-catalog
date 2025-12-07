@@ -29,12 +29,25 @@ public class WebService {
     }
 
     public static void main(String[] args) throws IOException {
-        
-        initializeMinerals();
-
-        int port = 8080;
+    initializeMinerals();
+    
+    // ИСПРАВЛЕННЫЙ КОД - читаем порт из переменной окружения
+    String portStr = System.getenv("PORT");
+    int port = 8080; // значение по умолчанию
+    
+    if (portStr != null && !portStr.isEmpty()) {
+        try {
+            port = Integer.parseInt(portStr);
+        } catch (NumberFormatException e) {
+            System.err.println("⚠️ Ошибка парсинга PORT: " + portStr + ", использую 8080");
+        }
+    }
+    
+    System.out.println("🚀 Запуск сервера на порту: " + port);
+    
+    try {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-
+        
         // Настройка маршрутов
         server.createContext("/", new HomeHandler());
         server.createContext("/minerals", new MineralsHandler());
@@ -51,14 +64,19 @@ public class WebService {
         server.createContext("/register", new RegisterHandler());
         server.createContext("/logout", new LogoutHandler());
         server.createContext("/images", new StaticFileHandler());
-
+        
         server.setExecutor(null);
         server.start();
-
-        System.out.println("🚀 Сервер запущен на http://localhost:" + port);
+        
+        System.out.println("✅ Сервер успешно запущен на порту: " + port);
         System.out.println("💎 Загружено минералов: " + mineralService.getCollectionSize());
+        
+    } catch (IOException e) {
+        System.err.println("❌ Ошибка запуска сервера: " + e.getMessage());
+        e.printStackTrace();
+        System.exit(1);
     }
-
+}
       private static void initializeMinerals() {
     try {
         System.out.println("🔄 Инициализация SQLite базы данных...");
